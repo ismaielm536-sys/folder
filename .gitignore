@@ -1,0 +1,115 @@
+using System;
+using System.Linq;
+
+namespace StatisticsApp
+{
+    internal class Program
+    {
+        static void Main(string[] args)
+        {
+            int[] data = {
+                115,182,191,31,196,1099,5,172,10,179,
+                83,21,20,21,186,177,195,193,188,199,
+                62,109,105,183,110
+            };
+
+            Array.Sort(data);
+
+            PrintResults(data);
+
+            Console.ReadKey();
+        }
+
+        // Function لعرض النتائج
+        static void PrintResults(int[] data)
+        {
+            int n = data.Length;
+
+            double mean = data.Average();
+
+            double median = GetMedian(data);
+
+            int mode = data.GroupBy(x => x)
+                           .OrderByDescending(g => g.Count())
+                           .Select(g => g.Key)
+                           .First();
+
+            double variance = data.Sum(x => Math.Pow(x - mean, 2)) / n;
+            double stdDev = Math.Sqrt(variance);
+
+            double q1 = GetPercentile(data, 0.25);
+            double q2 = GetPercentile(data, 0.50);
+            double q3 = GetPercentile(data, 0.75);
+
+            double iqr = q3 - q1;
+
+            double p20 = GetPercentile(data, 0.20);
+            double p50 = q2;
+
+            int range = data.Max() - data.Min();
+
+            Console.WriteLine("==== Statistical Analysis ====\n");
+
+            Console.WriteLine($"Mean: {mean:F2}");
+            Console.WriteLine($"Mode: {mode}");
+            Console.WriteLine($"Median: {median}");
+            Console.WriteLine($"Variance: {variance:F2}");
+            Console.WriteLine($"Standard Deviation: {stdDev:F2}");
+
+            Console.WriteLine("\n--- Percentiles & Quartiles ---");
+            Console.WriteLine($"P20: {p20}");
+            Console.WriteLine($"P50: {p50}");
+            Console.WriteLine($"Q1: {q1}");
+            Console.WriteLine($"Q2: {q2}");
+            Console.WriteLine($"Q3: {q3}");
+
+            Console.WriteLine($"\nRange: {range}");
+            Console.WriteLine($"IQR: {iqr}");
+
+            CheckOutliers(data, q1, q3, iqr);
+        }
+
+        // حساب Median
+        static double GetMedian(int[] data)
+        {
+            int n = data.Length;
+
+            if (n % 2 == 0)
+                return (data[n / 2] + data[(n / 2) - 1]) / 2.0;
+            else
+                return data[n / 2];
+        }
+
+        // حساب Percentile بطريقة أفضل
+        static double GetPercentile(int[] data, double p)
+        {
+            double index = (data.Length - 1) * p;
+            int lower = (int)Math.Floor(index);
+            int upper = (int)Math.Ceiling(index);
+
+            if (lower == upper)
+                return data[lower];
+
+            return data[lower] + (index - lower) * (data[upper] - data[lower]);
+        }
+
+        // Outliers
+        static void CheckOutliers(int[] data, double q1, double q3, double iqr)
+        {
+            double lower = q1 - (1.5 * iqr);
+            double upper = q3 + (1.5 * iqr);
+
+            Console.WriteLine("\n==== Outliers Detection ====");
+            Console.WriteLine($"Lower Bound: {lower}");
+            Console.WriteLine($"Upper Bound: {upper}");
+
+            foreach (int num in data)
+            {
+                if (num < lower || num > upper)
+                {
+                    Console.WriteLine($"Outlier Found: {num}");
+                }
+            }
+        }
+    }
+}
